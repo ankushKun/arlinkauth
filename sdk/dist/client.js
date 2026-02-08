@@ -1,5 +1,5 @@
 import { WalletAction, } from "./types.js";
-const DEFAULT_TOKEN_KEY = "wauth_token";
+const DEFAULT_TOKEN_KEY = "arlinkauth_token";
 export function createWauthClient(options) {
     const { apiUrl } = options;
     const tokenKey = options.tokenKey ?? DEFAULT_TOKEN_KEY;
@@ -87,7 +87,7 @@ export function createWauthClient(options) {
             const top = window.screenY + (window.outerHeight - height) / 2;
             const popup = window.open(loginUrl, "wauth-login", `width=${width},height=${height},left=${left},top=${top},popup=1`);
             if (!popup) {
-                console.error("[wauth] Failed to open popup - check popup blocker");
+                console.error("[arlinkauth] Failed to open popup - check popup blocker");
                 resolve(false);
                 return;
             }
@@ -99,7 +99,7 @@ export function createWauthClient(options) {
                 // Strict message structure validation
                 if (typeof event.data !== "object" || event.data === null)
                     return;
-                if (event.data.type !== "wauth:callback")
+                if (event.data.type !== "arlinkauth:callback")
                     return;
                 if (typeof event.data.token !== "string" || event.data.token.length === 0)
                     return;
