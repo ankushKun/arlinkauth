@@ -1,5 +1,5 @@
 {
-  "name": "wauth",
+  "name": "arlinkauth",
   "version": "0.1.0",
   "private": true,
   "workspaces": [
@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "dev": "bun run --filter '*' dev",
-    "setup": "bun install && bun run setup:db"
+    "setup": "bun install && bun run setup:db",
+    "setup:db": "cd worker && bun run setup"
   }
 }

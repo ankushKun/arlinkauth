@@ -1,15 +1,15 @@
 {
-  "name": "new_new_wauth",
-  "version": "1.0.0",
-  "description": "",
+  "name": "arlinkauth-worker",
+  "version": "0.1.0",
+  "description": "Arlink Auth - Cloudflare Worker backend",
   "private": true,
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "setup": "bunx wrangler d1 create wauth-db --local 2>/dev/null || true && bunx wrangler d1 execute wauth-db --local --file schema.sql",
+    "setup": "bunx wrangler d1 execute arlinkauth-db --local --file schema.sql",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": [],
+  "keywords": ["arweave", "auth", "oauth", "wallet"],
   "author": "",
   "license": "ISC",
   "devDependencies": {

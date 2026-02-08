@@ -120,7 +120,7 @@ function UserProfile({ user }: { user: WauthUser }) {
 
 function SigningDemo() {
   const { client } = useAuth();
-  const [message, setMessage] = useState("Hello from wauth!");
+  const [message, setMessage] = useState("Hello from Arlink Auth!");
   const [signatureResult, setSignatureResult] = useState<SignatureResult | null>(null);
   const [dataItemResult, setDataItemResult] = useState<SignDataItemResult | null>(null);
   const [isSigningMessage, setIsSigningMessage] = useState(false);
@@ -150,7 +150,7 @@ function SigningDemo() {
         data: message,
         tags: [
           { name: "Content-Type", value: "text/plain" },
-          { name: "App-Name", value: "wauth-demo" },
+          { name: "App-Name", value: "arlinkauth-demo" },
         ],
       });
       setDataItemResult(result);
@@ -234,7 +234,7 @@ function SigningDemo() {
 
 function DispatchDemo() {
   const { client } = useAuth();
-  const [message, setMessage] = useState("Hello from wauth! This is stored on Arweave.");
+  const [message, setMessage] = useState("Hello from Arlink Auth! This is stored on Arweave.");
   const [dispatchResult, setDispatchResult] = useState<DispatchResult | null>(null);
   const [isDispatching, setIsDispatching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -248,8 +248,8 @@ function DispatchDemo() {
         data: message,
         tags: [
           { name: "Content-Type", value: "text/plain" },
-          { name: "App-Name", value: "wauth-demo" },
-          { name: "App-Version", value: "1.0.0" },
+          { name: "App-Name", value: "arlinkauth-demo" },
+          { name: "App-Version", value: "0.1.0" },
         ],
       });
       setDispatchResult(result);

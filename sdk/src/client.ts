@@ -15,7 +15,7 @@ import {
   type DispatchResult,
 } from "./types.js";
 
-const DEFAULT_TOKEN_KEY = "wauth_token";
+const DEFAULT_TOKEN_KEY = "arlinkauth_token";
 
 export function createWauthClient(options: WauthClientOptions) {
   const { apiUrl } = options;
@@ -127,7 +127,7 @@ export function createWauthClient(options: WauthClientOptions) {
       );
 
       if (!popup) {
-        console.error("[wauth] Failed to open popup - check popup blocker");
+        console.error("[arlinkauth] Failed to open popup - check popup blocker");
         resolve(false);
         return;
       }
@@ -139,7 +139,7 @@ export function createWauthClient(options: WauthClientOptions) {
         
         // Strict message structure validation
         if (typeof event.data !== "object" || event.data === null) return;
-        if (event.data.type !== "wauth:callback") return;
+        if (event.data.type !== "arlinkauth:callback") return;
         if (typeof event.data.token !== "string" || event.data.token.length === 0) return;
         
         // Basic JWT structure validation (header.payload.signature)

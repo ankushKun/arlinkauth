@@ -15,10 +15,11 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch --preserveWatchOutput"
+    "dev": "tsc --watch --preserveWatchOutput",
+    "publish": "npm publish --access public"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=20"
   },
   "peerDependenciesMeta": {
     "react": {

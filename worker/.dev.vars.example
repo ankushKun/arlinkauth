@@ -1,3 +1,6 @@
+# Arlink Auth - Environment Variables
+# Copy this file to .dev.vars and fill in your values
+
 # GitHub OAuth - Get from https://github.com/settings/developers
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret

@@ -201,7 +201,7 @@ app.use("/auth/*", async (c, next) => {
 
 // Health check
 app.get("/", (c) => {
-  return c.json({ message: "wauth", timestamp: Date.now() });
+  return c.json({ message: "arlinkauth", version: "0.1.0", timestamp: Date.now() });
 });
 
 // ── Helper: Create or update user and ensure wallet exists ───
@@ -345,7 +345,7 @@ async function ensureUserAndWallet(
 
 function generateCallbackHtml(jwt: string, frontendUrl: string): string {
   // Safely encode data as JSON to prevent XSS
-  const safeMessage = JSON.stringify({ type: "wauth:callback", token: jwt });
+  const safeMessage = JSON.stringify({ type: "arlinkauth:callback", token: jwt });
   const safeFrontendUrl = JSON.stringify(frontendUrl);
   
   return `<!DOCTYPE html>

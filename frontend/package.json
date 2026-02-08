@@ -1,6 +1,7 @@
 {
-  "name": "bun-react-template",
+  "name": "arlinkauth-demo",
   "version": "0.1.0",
+  "description": "Arlink Auth - Demo frontend application",
   "private": true,
   "type": "module",
   "scripts": {
