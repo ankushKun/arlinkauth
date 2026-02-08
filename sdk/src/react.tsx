@@ -7,7 +7,8 @@ import {
   type ReactNode,
 } from "react";
 import { createWauthClient, type WauthClient } from "./client.js";
-import type { AuthState, WauthClientOptions, WauthUser } from "./types.js";
+import type { AuthState, WauthClientOptions, WauthUser, GitHubLoginOptions, GoogleLoginOptions } from "./types.js";
+import type { LoginResult } from "./client.js";
 
 // ── Context ───────────────────────────────────────────
 
@@ -15,9 +16,9 @@ type AuthContextValue = {
   user: WauthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: () => void;
-  loginWithGithub: () => void;
-  loginWithGoogle: () => void;
+  login: (options?: GitHubLoginOptions) => Promise<LoginResult>;
+  loginWithGithub: (options?: GitHubLoginOptions) => Promise<LoginResult>;
+  loginWithGoogle: (options?: GoogleLoginOptions) => Promise<LoginResult>;
   logout: () => void;
   getToken: () => string | null;
   client: WauthClient;
@@ -80,6 +81,8 @@ export function useAuth(): AuthContextValue {
 export type { WauthUser, AuthState, WauthClientOptions };
 export type {
   OAuthProvider,
+  GitHubLoginOptions,
+  GoogleLoginOptions,
   ArweaveTag,
   SignTransactionInput,
   SignTransactionResult,
@@ -91,4 +94,5 @@ export type {
   DispatchInput,
   DispatchResult,
 } from "./types.js";
+export type { LoginResult } from "./client.js";
 export { WalletAction } from "./types.js";

@@ -8,8 +8,10 @@ export type WauthUser = {
   // GitHub provider (optional)
   github_id: number | null;
   github_username: string | null;
+  github_access_token: string | null;
   // Google provider (optional)
   google_id: string | null;
+  google_access_token: string | null;
   // Wallet
   arweave_address: string | null;
   // Timestamps
@@ -18,6 +20,18 @@ export type WauthUser = {
 };
 
 export type OAuthProvider = "github" | "google";
+
+/** Options for GitHub OAuth login */
+export type GitHubLoginOptions = {
+  /** GitHub OAuth scopes to request (e.g., ["repo", "read:org"]) */
+  scopes?: string[];
+};
+
+/** Options for Google OAuth login */
+export type GoogleLoginOptions = {
+  /** Google OAuth scopes to request */
+  scopes?: string[];
+};
 
 // ── Wallet Action Types ──────────────────────────────────
 

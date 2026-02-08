@@ -5,6 +5,8 @@ import {
   type AuthState,
   type AuthChangeListener,
   type OAuthProvider,
+  type GitHubLoginOptions,
+  type GoogleLoginOptions,
   type SignTransactionInput,
   type SignTransactionResult,
   type SignDataItemInput,
@@ -14,6 +16,14 @@ import {
   type DispatchInput,
   type DispatchResult,
 } from "./types.js";
+
+/** Result returned after successful login */
+export type LoginResult = {
+  success: true;
+  user: WauthUser;
+} | {
+  success: false;
+};
 
 const DEFAULT_TOKEN_KEY = "arlinkauth_token";
 
@@ -111,10 +121,17 @@ export function createWauthClient(options: WauthClientOptions) {
 
   // ── Auth Actions ────────────────────────────────────
 
-  /** Open a popup for OAuth login with the specified provider */
-  function loginWithProvider(provider: OAuthProvider): Promise<boolean> {
+  /** Open a popup for OAuth login with the specified provider and optional scopes */
+  function loginWithProvider(provider: OAuthProvider, options?: { scopes?: string[] }): Promise<LoginResult> {
     return new Promise((resolve) => {
-      const loginUrl = `${apiUrl}/auth/${provider}`;
+      // Build login URL with origin and optional scopes
+      const params = new URLSearchParams({
+        origin: window.location.origin,
+      });
+      if (options?.scopes?.length) {
+        params.set("scopes", options.scopes.join(","));
+      }
+      const loginUrl = `${apiUrl}/auth/${provider}?${params.toString()}`;
       const width = 500;
       const height = 700;
       const left = window.screenX + (window.outerWidth - width) / 2;
@@ -128,7 +145,7 @@ export function createWauthClient(options: WauthClientOptions) {
 
       if (!popup) {
         console.error("[arlinkauth] Failed to open popup - check popup blocker");
-        resolve(false);
+        resolve({ success: false });
         return;
       }
 
@@ -156,11 +173,11 @@ export function createWauthClient(options: WauthClientOptions) {
         try {
           const user = await api.getMe();
           setState({ user, isLoading: false, isAuthenticated: true });
-          resolve(true);
+          resolve({ success: true, user });
         } catch {
           removeStoredToken();
           setState({ token: null, user: null, isLoading: false, isAuthenticated: false });
-          resolve(false);
+          resolve({ success: false });
         }
       };
 
@@ -171,25 +188,25 @@ export function createWauthClient(options: WauthClientOptions) {
         if (popup.closed) {
           clearInterval(checkClosed);
           window.removeEventListener("message", handleMessage);
-          resolve(false);
+          resolve({ success: false });
         }
       }, 500);
     });
   }
 
   /** Open a popup for GitHub OAuth login (no page refresh) */
-  function login(): Promise<boolean> {
-    return loginWithProvider("github");
+  function login(options?: GitHubLoginOptions): Promise<LoginResult> {
+    return loginWithProvider("github", options);
   }
 
-  /** Open a popup for GitHub OAuth login */
-  function loginWithGithub(): Promise<boolean> {
-    return loginWithProvider("github");
+  /** Open a popup for GitHub OAuth login with optional custom scopes */
+  function loginWithGithub(options?: GitHubLoginOptions): Promise<LoginResult> {
+    return loginWithProvider("github", options);
   }
 
-  /** Open a popup for Google OAuth login */
-  function loginWithGoogle(): Promise<boolean> {
-    return loginWithProvider("google");
+  /** Open a popup for Google OAuth login with optional custom scopes */
+  function loginWithGoogle(options?: GoogleLoginOptions): Promise<LoginResult> {
+    return loginWithProvider("google", options);
   }
 
   /**

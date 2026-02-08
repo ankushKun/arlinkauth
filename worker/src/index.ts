@@ -64,7 +64,7 @@ type Bindings = {
   GOOGLE_CLIENT_SECRET: string;
   // General
   JWT_SECRET: string;
-  /** Comma-separated list of allowed frontend origins (e.g., "http://localhost:3000,https://arlink.ar.io") */
+  /** Fallback frontend origin for OAuth callbacks when referer is unavailable */
   FRONTEND_URL: string;
   /** Master key for encrypting wallet JWKs */
   WALLET_ENCRYPTION_KEY: string;
@@ -124,49 +124,26 @@ const WalletActionPayloadSchema = z.discriminatedUnion("action", [
 
 const app = new Hono<AppEnv>();
 
-// Parse allowed origins from FRONTEND_URL (comma-separated)
-function getAllowedOrigins(frontendUrl: string): string[] {
-  return frontendUrl.split(",").map(url => url.trim()).filter(Boolean);
-}
-
-// CORS - Restrict to allowed frontend origins
+// CORS - Allow all origins
 app.use("*", async (c, next) => {
-  const allowedOrigins = getAllowedOrigins(c.env.FRONTEND_URL);
-  const origin = c.req.header("origin");
+  const origin = c.req.header("origin") || "*";
   
-  // Check if origin is allowed
-  const isAllowedOrigin = origin && allowedOrigins.includes(origin);
-  
-  // Allow requests from allowed origins or no origin (same-origin requests)
-  if (origin && !isAllowedOrigin) {
-    // For OAuth callbacks, we need to allow the request but not set CORS headers
-    // Check if this is an OAuth callback (these come from redirects, not XHR)
-    const path = new URL(c.req.url).pathname;
-    if (!path.startsWith("/auth/")) {
-      return c.json({ error: "CORS origin not allowed" }, 403);
-    }
-  }
-  
-  // Handle preflight - must return with CORS headers
-  if (c.req.method === "OPTIONS" && isAllowedOrigin) {
+  // Handle preflight
+  if (c.req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
       headers: {
         "Access-Control-Allow-Origin": origin,
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Access-Control-Allow-Credentials": "true",
       },
     });
   }
   
-  // Set CORS headers for allowed origins on actual requests
-  if (isAllowedOrigin) {
-    c.header("Access-Control-Allow-Origin", origin);
-    c.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-    c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    c.header("Access-Control-Allow-Credentials", "true");
-  }
+  // Set CORS headers for all origins
+  c.header("Access-Control-Allow-Origin", origin);
+  c.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   
   await next();
 });
@@ -431,24 +408,36 @@ function getStoredOAuthState(c: { req: { header: (name: string) => string | unde
 app.get("/auth/github", (c) => {
   const state = crypto.randomUUID();
   const redirectUri = new URL("/auth/github/callback", c.req.url).toString();
+  
+  // Default scopes required for basic auth, plus any custom scopes from query param
+  const defaultScopes = ["read:user", "user:email"];
+  const customScopes = c.req.query("scopes")?.split(",").map(s => s.trim()).filter(Boolean) ?? [];
+  const allScopes = [...new Set([...defaultScopes, ...customScopes])]; // dedupe
+  
   const params = new URLSearchParams({
     client_id: c.env.GITHUB_CLIENT_ID,
     redirect_uri: redirectUri,
-    scope: "read:user user:email",
+    scope: allScopes.join(" "),
     state,
   });
 
-  // Get the frontend origin from referer or use first allowed origin as fallback
+  // Get the frontend origin from query param (preferred), referer, or fallback
+  const originParam = c.req.query("origin");
   const referer = c.req.header("referer");
-  const allowedOrigins = getAllowedOrigins(c.env.FRONTEND_URL);
-  let frontendOrigin = allowedOrigins[0];
+  let frontendOrigin = c.env.FRONTEND_URL.split(",")[0].trim();
   
-  if (referer) {
+  if (originParam) {
     try {
-      const refererOrigin = new URL(referer).origin;
-      if (allowedOrigins.includes(refererOrigin)) {
-        frontendOrigin = refererOrigin;
-      }
+      // Validate it's a proper origin
+      frontendOrigin = new URL(originParam).origin;
+    } catch {
+      // Invalid origin param, try referer
+    }
+  }
+  
+  if (!originParam && referer) {
+    try {
+      frontendOrigin = new URL(referer).origin;
     } catch {
       // Invalid referer URL, use default
     }
@@ -559,17 +548,23 @@ app.get("/auth/google", (c) => {
     prompt: "consent",
   });
 
-  // Get the frontend origin from referer or use first allowed origin as fallback
+  // Get the frontend origin from query param (preferred), referer, or fallback
+  const originParam = c.req.query("origin");
   const referer = c.req.header("referer");
-  const allowedOrigins = getAllowedOrigins(c.env.FRONTEND_URL);
-  let frontendOrigin = allowedOrigins[0];
+  let frontendOrigin = c.env.FRONTEND_URL.split(",")[0].trim();
   
-  if (referer) {
+  if (originParam) {
     try {
-      const refererOrigin = new URL(referer).origin;
-      if (allowedOrigins.includes(refererOrigin)) {
-        frontendOrigin = refererOrigin;
-      }
+      // Validate it's a proper origin
+      frontendOrigin = new URL(originParam).origin;
+    } catch {
+      // Invalid origin param, try referer
+    }
+  }
+  
+  if (!originParam && referer) {
+    try {
+      frontendOrigin = new URL(referer).origin;
     } catch {
       // Invalid referer URL, use default
     }
@@ -580,77 +575,82 @@ app.get("/auth/google", (c) => {
 });
 
 app.get("/auth/google/callback", async (c) => {
-  const code = c.req.query("code");
-  const state = c.req.query("state");
-  const stored = getStoredOAuthState(c);
+  try {
+    const code = c.req.query("code");
+    const state = c.req.query("state");
+    const stored = getStoredOAuthState(c);
 
-  if (!code || !state || !stored || state !== stored.state) {
-    return c.json({ error: "Invalid OAuth state" }, 400);
+    if (!code || !state || !stored || state !== stored.state) {
+      return c.json({ error: "Invalid OAuth state", debug: { hasCode: !!code, hasState: !!state, hasStored: !!stored } }, 400);
+    }
+    
+    const frontendOrigin = stored.frontendOrigin;
+
+    const redirectUri = new URL("/auth/google/callback", c.req.url).toString();
+
+    // Exchange code for access token
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: c.env.GOOGLE_CLIENT_ID,
+        client_secret: c.env.GOOGLE_CLIENT_SECRET,
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: redirectUri,
+      }),
+    });
+
+    const tokenData = (await tokenRes.json()) as {
+      access_token?: string;
+      id_token?: string;
+      error?: string;
+    };
+
+    if (!tokenData.access_token) {
+      return c.json({ error: "Failed to get access token", details: tokenData }, 400);
+    }
+
+    // Fetch Google user info
+    const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+      },
+    });
+
+    const googleUser = (await userRes.json()) as {
+      id: string;
+      email: string;
+      verified_email: boolean;
+      name: string;
+      picture: string;
+    };
+
+    // Create or update user
+    const userId = await ensureUserAndWallet(c.env.DB, c.env.WALLET_ENCRYPTION_KEY, {
+      provider: "google",
+      providerId: googleUser.id,
+      email: googleUser.verified_email ? googleUser.email : null,
+      name: googleUser.name,
+      avatarUrl: googleUser.picture,
+      accessToken: tokenData.access_token,
+    });
+
+    // Issue JWT
+    const jwt = await sign(
+      { sub: userId, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 },
+      c.env.JWT_SECRET,
+      "HS256"
+    );
+
+    clearOAuthStateCookie(c);
+    return c.html(generateCallbackHtml(jwt, frontendOrigin));
+  } catch (err) {
+    console.error("[auth/google/callback] Error:", err);
+    return c.json({ error: "OAuth callback failed", details: err instanceof Error ? err.message : String(err) }, 500);
   }
-  
-  const frontendOrigin = stored.frontendOrigin;
-
-  const redirectUri = new URL("/auth/google/callback", c.req.url).toString();
-
-  // Exchange code for access token
-  const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      client_id: c.env.GOOGLE_CLIENT_ID,
-      client_secret: c.env.GOOGLE_CLIENT_SECRET,
-      code,
-      grant_type: "authorization_code",
-      redirect_uri: redirectUri,
-    }),
-  });
-
-  const tokenData = (await tokenRes.json()) as {
-    access_token?: string;
-    id_token?: string;
-    error?: string;
-  };
-
-  if (!tokenData.access_token) {
-    return c.json({ error: "Failed to get access token", details: tokenData }, 400);
-  }
-
-  // Fetch Google user info
-  const userRes = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
-    headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
-    },
-  });
-
-  const googleUser = (await userRes.json()) as {
-    id: string;
-    email: string;
-    verified_email: boolean;
-    name: string;
-    picture: string;
-  };
-
-  // Create or update user
-  const userId = await ensureUserAndWallet(c.env.DB, c.env.WALLET_ENCRYPTION_KEY, {
-    provider: "google",
-    providerId: googleUser.id,
-    email: googleUser.verified_email ? googleUser.email : null,
-    name: googleUser.name,
-    avatarUrl: googleUser.picture,
-    accessToken: tokenData.access_token,
-  });
-
-  // Issue JWT
-  const jwt = await sign(
-    { sub: userId, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 },
-    c.env.JWT_SECRET,
-    "HS256"
-  );
-
-  clearOAuthStateCookie(c);
-  return c.html(generateCallbackHtml(jwt, frontendOrigin));
 });
 
 // ── JWT Auth Middleware (for /api/*) ───────────────────
@@ -681,9 +681,9 @@ app.use("/api/*", async (c, next) => {
 app.get("/api/me", async (c) => {
   const userId = c.get("userId");
   
-  // Get user info - NEVER expose OAuth tokens to frontend
+  // Get user info including OAuth tokens
   const user = await c.env.DB.prepare(
-    `SELECT id, email, name, avatar_url, github_id, github_username, google_id, created_at, updated_at FROM users WHERE id = ?1`
+    `SELECT id, email, name, avatar_url, github_id, github_username, github_access_token, google_id, google_access_token, created_at, updated_at FROM users WHERE id = ?1`
   )
     .bind(userId)
     .first<{
@@ -693,7 +693,9 @@ app.get("/api/me", async (c) => {
       avatar_url: string | null;
       github_id: number | null;
       github_username: string | null;
+      github_access_token: string | null;
       google_id: string | null;
+      google_access_token: string | null;
       created_at: string;
       updated_at: string;
     }>();

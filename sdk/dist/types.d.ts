@@ -5,12 +5,24 @@ export type WauthUser = {
     avatar_url: string | null;
     github_id: number | null;
     github_username: string | null;
+    github_access_token: string | null;
     google_id: string | null;
+    google_access_token: string | null;
     arweave_address: string | null;
     created_at: string;
     updated_at: string;
 };
 export type OAuthProvider = "github" | "google";
+/** Options for GitHub OAuth login */
+export type GitHubLoginOptions = {
+    /** GitHub OAuth scopes to request (e.g., ["repo", "read:org"]) */
+    scopes?: string[];
+};
+/** Options for Google OAuth login */
+export type GoogleLoginOptions = {
+    /** Google OAuth scopes to request */
+    scopes?: string[];
+};
 export declare enum WalletAction {
     SIGN = "sign",
     SIGN_DATA_ITEM = "signDataItem",

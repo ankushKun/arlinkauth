@@ -1,6 +1,6 @@
 {
   "name": "arlinkauth",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Authentication SDK for Arweave apps - OAuth login with automatic wallet generation",
   "type": "module",
   "main": "./dist/index.js",
