@@ -1,0 +1,6 @@
+wauth
+.env
+.dev.vars
+new_wauth
+node_modules
+.DS_Store

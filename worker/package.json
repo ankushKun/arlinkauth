@@ -1,0 +1,24 @@
+{
+  "name": "new_new_wauth",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260207.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.63.0"
+  },
+  "dependencies": {
+    "@dha-team/arbundles": "^1.0.4",
+    "arweave": "^1.15.5",
+    "hono": "^4.11.8"
+  }
+}

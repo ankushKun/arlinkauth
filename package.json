@@ -1,0 +1,13 @@
+{
+  "name": "wauth",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "sdk",
+    "frontend",
+    "worker"
+  ],
+  "scripts": {
+    "dev": "bun run --filter '*' dev"
+  }
+}
