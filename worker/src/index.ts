@@ -64,7 +64,7 @@ type Bindings = {
   GOOGLE_CLIENT_SECRET: string;
   // General
   JWT_SECRET: string;
-  /** Comma-separated list of allowed frontend origins (e.g., "http://localhost:3000,https://arlink.ar.io") */
+  /** Fallback frontend origin for OAuth callbacks when referer is unavailable */
   FRONTEND_URL: string;
   /** Master key for encrypting wallet JWKs */
   WALLET_ENCRYPTION_KEY: string;
@@ -124,31 +124,12 @@ const WalletActionPayloadSchema = z.discriminatedUnion("action", [
 
 const app = new Hono<AppEnv>();
 
-// Parse allowed origins from FRONTEND_URL (comma-separated)
-function getAllowedOrigins(frontendUrl: string): string[] {
-  return frontendUrl.split(",").map(url => url.trim()).filter(Boolean);
-}
-
-// CORS - Restrict to allowed frontend origins
+// CORS - Allow all origins
 app.use("*", async (c, next) => {
-  const allowedOrigins = getAllowedOrigins(c.env.FRONTEND_URL);
   const origin = c.req.header("origin");
   
-  // Check if origin is allowed
-  const isAllowedOrigin = origin && allowedOrigins.includes(origin);
-  
-  // Allow requests from allowed origins or no origin (same-origin requests)
-  if (origin && !isAllowedOrigin) {
-    // For OAuth callbacks, we need to allow the request but not set CORS headers
-    // Check if this is an OAuth callback (these come from redirects, not XHR)
-    const path = new URL(c.req.url).pathname;
-    if (!path.startsWith("/auth/")) {
-      return c.json({ error: "CORS origin not allowed" }, 403);
-    }
-  }
-  
-  // Handle preflight - must return with CORS headers
-  if (c.req.method === "OPTIONS" && isAllowedOrigin) {
+  // Handle preflight
+  if (c.req.method === "OPTIONS" && origin) {
     return new Response(null, {
       status: 204,
       headers: {
@@ -160,8 +141,8 @@ app.use("*", async (c, next) => {
     });
   }
   
-  // Set CORS headers for allowed origins on actual requests
-  if (isAllowedOrigin) {
+  // Set CORS headers for all origins
+  if (origin) {
     c.header("Access-Control-Allow-Origin", origin);
     c.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     c.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -438,17 +419,13 @@ app.get("/auth/github", (c) => {
     state,
   });
 
-  // Get the frontend origin from referer or use first allowed origin as fallback
+  // Get the frontend origin from referer
   const referer = c.req.header("referer");
-  const allowedOrigins = getAllowedOrigins(c.env.FRONTEND_URL);
-  let frontendOrigin = allowedOrigins[0];
+  let frontendOrigin = c.env.FRONTEND_URL; // fallback
   
   if (referer) {
     try {
-      const refererOrigin = new URL(referer).origin;
-      if (allowedOrigins.includes(refererOrigin)) {
-        frontendOrigin = refererOrigin;
-      }
+      frontendOrigin = new URL(referer).origin;
     } catch {
       // Invalid referer URL, use default
     }
@@ -559,17 +536,13 @@ app.get("/auth/google", (c) => {
     prompt: "consent",
   });
 
-  // Get the frontend origin from referer or use first allowed origin as fallback
+  // Get the frontend origin from referer
   const referer = c.req.header("referer");
-  const allowedOrigins = getAllowedOrigins(c.env.FRONTEND_URL);
-  let frontendOrigin = allowedOrigins[0];
+  let frontendOrigin = c.env.FRONTEND_URL; // fallback
   
   if (referer) {
     try {
-      const refererOrigin = new URL(referer).origin;
-      if (allowedOrigins.includes(refererOrigin)) {
-        frontendOrigin = refererOrigin;
-      }
+      frontendOrigin = new URL(referer).origin;
     } catch {
       // Invalid referer URL, use default
     }
