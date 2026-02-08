@@ -1,0 +1,15 @@
+{
+  "name": "arlinkauth",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "sdk",
+    "frontend",
+    "worker"
+  ],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "setup": "bun install && bun run setup:db",
+    "setup:db": "cd worker && bun run setup"
+  }
+}

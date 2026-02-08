@@ -1,0 +1,26 @@
+{
+  "name": "arlinkauth-worker",
+  "version": "0.1.0",
+  "description": "Arlink Auth - Cloudflare Worker backend",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "setup": "bunx wrangler d1 execute arlinkauth-db --local --file schema.sql",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["arweave", "auth", "oauth", "wallet"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260207.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.63.0"
+  },
+  "dependencies": {
+    "@dha-team/arbundles": "^1.0.4",
+    "arweave": "^1.15.5",
+    "hono": "^4.11.8",
+    "zod": "^4.3.6"
+  }
+}
