@@ -304,12 +304,12 @@ This starts:
 
 ### Endpoints
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/auth/github` | GET | No | Start GitHub OAuth (supports `?scopes=repo,gist`) |
-| `/auth/google` | GET | No | Start Google OAuth |
-| `/api/me` | GET | Yes | Get current user |
-| `/api/wallet/action` | POST | Yes | Sign/dispatch data |
+| Endpoint             | Method | Auth | Description                                       |
+| -------------------- | ------ | ---- | ------------------------------------------------- |
+| `/auth/github`       | GET    | No   | Start GitHub OAuth (supports `?scopes=repo,gist`) |
+| `/auth/google`       | GET    | No   | Start Google OAuth                                |
+| `/api/me`            | GET    | Yes  | Get current user                                  |
+| `/api/wallet/action` | POST   | Yes  | Sign/dispatch data                                |
 
 ### Wallet Actions
 
