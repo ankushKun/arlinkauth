@@ -21,6 +21,18 @@ export type WauthUser = {
 
 export type OAuthProvider = "github" | "google";
 
+/** Options for GitHub OAuth login */
+export type GitHubLoginOptions = {
+  /** GitHub OAuth scopes to request (e.g., ["repo", "read:org"]) */
+  scopes?: string[];
+};
+
+/** Options for Google OAuth login */
+export type GoogleLoginOptions = {
+  /** Google OAuth scopes to request */
+  scopes?: string[];
+};
+
 // ── Wallet Action Types ──────────────────────────────────
 
 export enum WalletAction {

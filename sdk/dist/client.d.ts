@@ -1,10 +1,19 @@
-import { type WauthClientOptions, type WauthUser, type AuthState, type AuthChangeListener, type OAuthProvider, type SignTransactionInput, type SignTransactionResult, type SignDataItemInput, type SignDataItemResult, type SignatureInput, type SignatureResult, type DispatchInput, type DispatchResult } from "./types.js";
+import { type WauthClientOptions, type WauthUser, type AuthState, type AuthChangeListener, type OAuthProvider, type GitHubLoginOptions, type GoogleLoginOptions, type SignTransactionInput, type SignTransactionResult, type SignDataItemInput, type SignDataItemResult, type SignatureInput, type SignatureResult, type DispatchInput, type DispatchResult } from "./types.js";
+/** Result returned after successful login */
+export type LoginResult = {
+    success: true;
+    user: WauthUser;
+} | {
+    success: false;
+};
 export declare function createWauthClient(options: WauthClientOptions): {
     init: () => Promise<AuthState>;
-    login: () => Promise<boolean>;
-    loginWithGithub: () => Promise<boolean>;
-    loginWithGoogle: () => Promise<boolean>;
-    loginWithProvider: (provider: OAuthProvider) => Promise<boolean>;
+    login: (options?: GitHubLoginOptions) => Promise<LoginResult>;
+    loginWithGithub: (options?: GitHubLoginOptions) => Promise<LoginResult>;
+    loginWithGoogle: (options?: GoogleLoginOptions) => Promise<LoginResult>;
+    loginWithProvider: (provider: OAuthProvider, options?: {
+        scopes?: string[];
+    }) => Promise<LoginResult>;
     logout: () => void;
     handleCallback: () => boolean;
     isAuthenticated: () => boolean;

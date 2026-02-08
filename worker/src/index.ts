@@ -408,10 +408,16 @@ function getStoredOAuthState(c: { req: { header: (name: string) => string | unde
 app.get("/auth/github", (c) => {
   const state = crypto.randomUUID();
   const redirectUri = new URL("/auth/github/callback", c.req.url).toString();
+  
+  // Default scopes required for basic auth, plus any custom scopes from query param
+  const defaultScopes = ["read:user", "user:email"];
+  const customScopes = c.req.query("scopes")?.split(",").map(s => s.trim()).filter(Boolean) ?? [];
+  const allScopes = [...new Set([...defaultScopes, ...customScopes])]; // dedupe
+  
   const params = new URLSearchParams({
     client_id: c.env.GITHUB_CLIENT_ID,
     redirect_uri: redirectUri,
-    scope: "read:user user:email",
+    scope: allScopes.join(" "),
     state,
   });
 
