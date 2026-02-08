@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "setup": "bunx wrangler d1 create wauth-db --local 2>/dev/null || true && bunx wrangler d1 execute wauth-db --local --file schema.sql",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],

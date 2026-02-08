@@ -8,6 +8,7 @@
     "worker"
   ],
   "scripts": {
-    "dev": "bun run --filter '*' dev"
+    "dev": "bun run --filter '*' dev",
+    "setup": "bun install && bun run setup:db"
   }
 }
