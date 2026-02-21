@@ -11,7 +11,7 @@ function isBrowser() {
 }
 // ── Auto-detecting Factory ──────────────────────────────
 // Default API URL
-const DEFAULT_API_URL = "https://arlinkauth.arlink.workers.dev";
+const DEFAULT_API_URL = "https://arlinkauth.contact-arlink.workers.dev";
 /**
  * Create an auth client that automatically detects the environment.
  *

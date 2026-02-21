@@ -32,7 +32,7 @@ const IS_DEV = process.env.DEV === "true";
 
 const DEFAULT_API_URL = IS_DEV 
   ? "http://localhost:8787" 
-  : "https://arlinkauth.arlink.workers.dev";
+  : "https://arlinkauth.contact-arlink.workers.dev";
 const DEFAULT_FRONTEND_URL = IS_DEV 
   ? "http://localhost:3000" 
   : "https://auth.arlink.app";
